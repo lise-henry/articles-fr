@@ -1,0 +1,140 @@
+Programmation orientée objet en C
+=================================
+
+Introduction
+============
+- Le C ne permet pas de faire de l'orienté objet
+  -> il existe pourtant des bibliothèques C objet (Gtk)
+- Pourquoi faire de l'orienté objet en C ?
+  -> pas toujours accès à d'autres langages ou bibliothèques
+  -> permet de mieux comprendre ce que l'on fait
+     -> optimisation
+     -> mieux comprendre mécanismes sous-jacents à ce qu'on fait dans
+        les langages plus haut niveau
+     -> choisir ce qu'on veut utiliser ou pas comme concepts objets
+
+1) Quelques concept de la programmation objet
+=============================================
+- Qu'est-ce qu'une classe ?
+- Qu'est-ce qu'un objet ?
+- Méthodes et attributs
+- Héritage
+- Méthode virtuelle
+- Constructeurs et destructeurs
+- Avoir une classe «root» ou pas ?
+
+
+2) Implémenter des classes et objets avec attributs
+===================================================
+
+- Utilisation de struct et de type
+- Possibilité d'héritage 
+
+3) Implémenter des méthodes non virtuelles
+==========================================
+-> object_do_something (object t *, ...)
+-> avantages :
+   -> simple à implémenter
+   -> peu coûteux en mémoire et en temps
+-> inconvénients : 
+   -> syntaxe un peu redondante
+   -> ne permet pas des méthodes virtuelles (exemple)
+
+4) Implémenter des méthodes virtuelles
+======================================
+-> ajouter pointeur de fonction dans la structure
+-> object = object_new (); object->do_something (...);
+-> avantages : 
+   -> moins redondant dans l'utilisation (se rapproche de la syntaxe
+      du C++)
+   -> permet l'utilisation de méthodes virtuelles (notamment vitales
+      pour les destructeurs)
+-> inconvénients : 
+   -> un peu plus compliqué à mettre en place
+   -> nécessite de créer des constructeurs pour allouer les pointeurs
+      de fonctions
+   -> surtout, prend vite beaucoup d'espace mémoire !
+
+5) Implémenter des méthodes virtuelles (et consommer moins de RAM)
+==================================================================
+-> nécessité de créer une structure object_class, qui va contenir les
+   pointeurs de fonction 
+-> l'objet va alors contenir un pointeur vers sa classe
+-> object->klass->do_something (...)
+-> object_do_something (object, ...); 
+   -> permet de mélanger avec des méthodes non virtuelles
+-> avantages :
+   -> permet d'avoir des méthodes virtuelles avec un coût en mémoire
+      proportionnel au nombre de classe et pas au nombre d'instances
+-> inconvénients : 
+   -> nécessite, pour chaque classe, de créer deux structures
+      différentes, ainsi que des constructeurs
+-> exemple particulier de méthode virtuelle : le destructeur
+
+6) Vérifier qu'un objet est d'un type donné
+===========================================
+-> créer une méthode vérifier de quel type est un objet est
+   facile (cela revient à comparer des pointeurs)
+-> cependant, en pratique on veut plutôt savoir si un objet est membre
+   d'une classe _ou de ses descendantes_: un rectangle est aussi un
+   quadrilatère. 
+-> nécessité d'ajouter un pointeur parent dans la structure classe
+-> méthode récursive
+
+7) Méthodes statiques
+=====================
+-> qu'est-ce qu'une méthode statique ?
+-> comment créer une méthode statique ?
+   -> object_class_do_something (klass, ...)
+
+8) Constructeurs : différence entre initialisation et allocation
+================================================================
+-> dans les exemples précédents, l'allocation de la RAM se fait
+   «manuellement»: on malloc avant d'initialiser (on peut aussi créer
+   une struct)
+-> peut être suffisant, mais il peut être intéressant d'utiliser une
+   méthode statique de classe object pour allouer un objet
+   -> nécessite d'ajouter un champ «size»
+   -> l'intérêt est qu'il est ensuite possible de modifier cette
+      méthode et de répercuter les changements à tous les objets créés 
+      -> par exemple, si on veut débugger et voir où on
+         alloue/supprime la mémoire 
+      -> ou alors si on veut avoir un système de compteur de référence
+         et de retain/release
+      -> similaire dans le principe au fonctionnement d'Objective-C
+
+9) Automatiser un peu les initialisation des classes
+====================================================
+-> avec ces exemples, il est nécessaire pour chaque classe d'avoir un
+   morceau de code où l'on initialisait d'abord les méthodes
+   virtuelles, puis la taille, puis la classe parente, etc.
+-> il est néanmoins possible d'automatiser en partie ce code :
+   -> class_register (klass, parent, size, void (* dtor) (Object *
+      object));
+   -> ainsi il n'y a qu'à modifier manuellement les pointeurs de
+      fonction propre à la classe (et pas de ses parents)
+-> reste embêtant car cela fait un morceau de code à lancer avant de
+   pouvoir utiliser nos classes. Pas très modulaire, et nécéssite par
+   exemple si l'on crée une bibliothèque d'avoir une fonction pour
+   l'initialiser où l'on regroupe tout ce code.
+-> une alternative est de ne pas utiliser directement les pointeurs
+   sur des classes, mais d'utiliser une fonction qui va renvoyer le
+   pointeur si la classe existe déjà, et initialiser cette classe si
+   elle ne l'a pas été.
+   -> Object ()
+
+
+Conclusion 
+==========
+-> Bilan : 
+   -> permet d'intégrer des concepts objets à du C de façon
+      éventuellement modulable selon ses besoins
+   -> permet d'avoir une vague idée de comment ça peut marcher «sous
+      le capeau», soit pour des langages objets, soit pour des
+      bibliothèques comme Gtk+
+-> Limites :
+   -> notion de «visibilité» : public/protected/private absente
+   -> héritage multiple
+   -> nécessité de créer deux structures à chaque fois et de devoir
+      écrire pas mal de code que les langages objets ont intégré (même
+      si pas si compliqué une fois qu'on a créé la classe Object)
