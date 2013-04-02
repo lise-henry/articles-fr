@@ -1,0 +1,382 @@
+\documentclass{beamer}
+
+\usetheme{default}
+\usecolortheme{oi}
+
+\usepackage[francais]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{multimedia}
+
+%\usepackage[francais]{babel}
+
+
+\usepackage{listings}
+\usepackage{color}
+\usepackage{textcomp}
+\definecolor{listinggray}{gray}{0.9}
+\definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
+\lstset{
+	backgroundcolor=\color{lbcolor},
+	tabsize=4,
+	rulecolor=,
+	language=java,
+        basicstyle=\scriptsize,
+        upquote=true,
+        aboveskip={1.5\baselineskip},
+        columns=fixed,
+        showstringspaces=false,
+        extendedchars=true,
+        breaklines=true,
+        prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+        frame=single,
+        showtabs=false,
+        showspaces=false,
+        showstringspaces=false,
+        identifierstyle=\ttfamily,
+        keywordstyle=\color[rgb]{0,0,1},
+        commentstyle=\color[rgb]{0.133,0.545,0.133},
+        stringstyle=\color[rgb]{0.627,0.126,0.941},
+}
+
+\author{Élisabeth Henry}
+\title{Threads en Java}
+
+\setbeamertemplate{navigation symbols}{}
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Une petite recette}
+  Recette de cookies
+  \begin{itemize}
+  \item Préparation : 20 minutes
+  \item Cuisson : 10 minutes
+  \end{itemize}
+  \begin{itemize}
+  \item Préchauffer le four à 180 degrés
+  \item Mélanger le beurre et le sucre en poudre
+  \item Ajouter les \oe ufs, 1 pincée de sel et mélanger encore
+  \item Dans un autre récipient, mélanger la farine et la levure
+  \item Incorporer cette farine au mélange \oe uf-beurre
+  \item Ajouter les pépites de chocolat et mélanger
+  \item Former des tas de pâte et mettre au four
+  \item Laisser cuire 10 minutes
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Programmation de la recette}
+Classe Recette
+\lstinputlisting{recette.java}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Programmation de la recette}
+Classe Four
+\lstinputlisting{four1.java}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Résultats}
+\lstinputlisting{recette1.txt}
+  \uncover<2>{
+    \begin{alertblock}{}
+      \begin{center}
+        Pendant que le four préchauffe, on ne fait rien...
+      \end{center}
+    \end{alertblock}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Importance du multithreading}
+  \begin{itemize}
+  \item Il n'est pas toujours pertinent d'exécuter l'ensemble d'un
+    programme séquentiellement
+  \item $\rightarrow$ ressources bloquantes
+    \begin{itemize}
+    \item four.prechauffer ();
+    \item lecture/écriture sur des périphériques
+    \item demande d'entrée de l'utilisateur
+    \item attente d'une connexion réseau
+    \item ...
+    \end{itemize}
+  \item $\rightarrow$ utilisation de plusieurs processeurs
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Threads et processus}
+  \begin{itemize}
+  \item Un processus est un programme en cours d'exécution
+  \item Contient :
+    \begin{itemize}
+    \item des instructions (les lignes de code) ;
+    \item de la mémoire (espace d'adressage) ;
+    \item des ressources (fichiers ouverts, sockets, ...).
+    \end{itemize}
+  \item Il est possible d'avoir plusieurs threads dans un processus
+    \begin{itemize}
+    \item la mémoire, les ressources, le code... sont partagés entre
+      les threads d'un même processus ;
+    \item ce qui distingue deux threads c'est leur «position» dans le
+      code (d'un point de vue technique, la pile et les registres)
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Les threads en Java}
+  En Java, il existe deux façons de gérer plusieurs Threads :
+  \begin{itemize}
+  \item l'interface Runnable ;
+  \item la classe Thread, qui implémente cette interface.
+  \end{itemize}
+  \begin{block}{Interface Runnable}
+  L'interface Runnable définit principalement une méthode
+  void run () qu'une classe doit implémenter pour lancer un
+  nouveau thread. Il est ensuite possible de lancer cette méthode en
+  parallèle du reste du programme.
+  \end{block}
+  \begin{block}{Classe Thread}
+    La classe Thread implémente l'interface
+    Runnable. Là encore, il est nécessaire d'implémenter la
+    méthode void run (). La classe Thread fournit par
+    ailleurs un certain nombre de méthodes utiles.
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Utilisation de la classe Thread}
+    \lstinputlisting{exemple_thread.java}
+\end{frame}
+
+\begin{frame}{Utilisation de l'interface Runnable}
+  \lstinputlisting{exemple_runnable.java}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Retournons à nos cookies}
+  Classe four
+  \lstinputlisting{four_thread.java}
+    \begin{itemize}
+    \item run () se charge maintenant d'appeler prechauffer
+      (temperature) ;
+    \item comme run () ne prend pas de paramètres, et que prechauffer
+      demande un entier, il faut le passer avant (ici, dans le constructeur).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Cookies multithreads}
+  Classe Recette
+  \lstinputlisting{recette_thread.java}
+\begin{block}{Différences}
+  \begin{itemize}
+  \item Seul la méthode main change (un peu).
+  \item Au lieu d'appeler directement four.prechauffer (temperature), il est
+  nécessaire de passer la température au constructeur, puis d'appeler
+  four.start () (et non pas four.run ()...)
+  \end{itemize}
+
+\end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Résultats}
+\lstinputlisting{recette2.txt}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Synchronisation entre threads}
+  Dans cet exemple, on gagne du temps en préchauffant le four
+  pendant qu'on commence à préparer
+  \begin{alertblock}{MAIS...}
+    À aucun moment, on ne vérifie que le four est effectivement chaud
+    avant de mettre le plat dedans.
+  \end{alertblock}
+  Lorsqu'on lance plusieurs threads, on a souvent besoin de les
+  synchroniser à un moment donné (en général lorsqu'ils ont fini leur
+  traitement).
+  
+  En effet, il faut vérifier qu'un traitement a bien été accompli
+  avant de passer à la suite.
+
+  \begin{itemize}
+  \item Thread fournit la méthode join (), qui attend (éventuellement
+    un temps limité) qu'un thread ait terminé son exécution.
+  \item Lance une InterruptedException si le thread appelant a été interrompu.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Nouvelle méthode Recette.main}
+  \lstinputlisting{recette_thread2.java}
+  \begin{itemize}
+  \item On s'assure ici que le thread «préchauffement du four» s'est
+    terminé avant de continuer.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Sleep}
+  La classe Thread fournit d'autres méthodes :
+  \begin{itemize}
+  \item static void sleep (int milliseconds) throws InterruptedException
+  \item Cette méthode arrête le thread courant pendant le nombre de
+    millisecondes passées en paramètre.
+  \end{itemize}
+  \lstinputlisting{ex_sleep.java}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Interruptions}
+  \begin{block}{Interrupt}
+    \begin{itemize}
+    \item public void interrupt () throws SecurityException
+    \item interrompt un thread existant : thread.interrupt ()
+    \item le thread interrompu reçoit une InterruptedException s'il
+      est dans une méthode (sleep, join) qui peut la lancer
+    \item sinon, il peut savoir qu'il a été interrompu grâce à la
+      méthode isInterrupted
+    \end{itemize}
+  \end{block}
+  \begin{block}{isInterrupted}
+    \begin{itemize}
+    \item public boolean isInterrupted ()
+    \item permet de savoir si un thread a été interrompu
+    \item si ça renvoie true, le thread doit se terminer proprement
+    \end{itemize}
+  \end{block}
+\end{frame}
+\begin{frame}
+  \frametitle{Exemple sleep et interrupt}
+  \lstinputlisting{interruptexemple.java}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Autres méthodes de Thread}
+  \begin{itemize}
+  \item boolean isAlive (): renvoie true si le thread est «vivant»,
+    c'est-à-dire s'il a commencé mais n'a pas été terminé ;
+  \item static Thread currentThread (): renvoie une référence au
+    thread en cours d'exécution ;
+  \item final void setDeamon (boolean on): permet de faire de ce
+    thread un thread «daemon» (si on est true) ou «utilisateur» (si on
+    est false) ;
+  \item final boolean isDeamon (): renvoie true si le thread est «daemon» ;
+    \begin{block}{Thread daemon}
+      Par défaut, les thread créés sont «utilisateur», et le programme ne
+      se termine que lorsque tous les threads sont terminés. À
+      l'inverse, les threads «daemon» sont terminés dès qu'il n'y a
+      plus de threads utilisateur.
+    \end{block}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Ressources partagées}
+  \begin{itemize}
+  \item Dans les cas simples, des threads différents s'occupent de
+    ressources différentes
+  \item Lorsque deux threads sont amenés à manipuler les mêmes
+    ressources (variables par exemple), il faut faire attention car
+    rien n'indique qu'un autre thread n'a pas modifié une variable
+    entre deux instructions
+  \end{itemize}
+\lstinputlisting{exemple_shmem.java}
+Dans cet exemple, si un autre thread peut modifier n, rien n'indique
+que d'une ligne à l'autre la valeur de n n'ait pas changé $\rightarrow$ les données affichées ne sont pas cohérentes.
+\end{frame}
+
+\begin{frame}
+  \frametitle{Mot-clé synchronized}
+Pour éviter que deux threads n'accèdent à une même variable en même
+temps, Java propose le mot-clé synchronized.
+    \lstinputlisting{synchronized.java}
+
+Quelque soit le nombre de threads créés, on s'assure ainsi que
+  pour un objet monObjet de type MaClasse, les méthodes uneFonction ()
+  et uneAutreFonction () ne pourront pas être exécutées en même temps.
+
+Autrement dit, pour accéder à une méthode synchronisée d'un objet, un
+thread met un verrou sur cet objet et s'assure ainsi qu'aucune autre
+méthode synchronisée ne sera exécutée en même temps. 
+\end{frame}
+
+\begin{frame}
+  \frametitle{Le retour du mot-clé synchronized}
+  Il est aussi possible d'utiliser le mot clé synchronized d'une autre
+  façon, en limitant le verrouillage à un seul bloc au lieu de toute
+  une méthode.
+  \lstinputlisting{synchronized2.java}
+\end{frame}
+
+\begin{frame}
+  \frametitle{wait () et notifyAll ()}
+  Parfois, un thread doit attendre qu'un autre thread ait effectué une
+  tâche concernant un objet avant de continuer.
+
+  La classe Object propose des méthodes pour gérer cela :
+  \begin{itemize}
+  \item void wait () throws InterruptedException : le
+    thread va attendre jusqu'à ce qu'un autre thread envoie une
+    notification concernant cet objet (cela lance alors
+    l'Exception). Avant d'utiliser monObjet.wait (), un thread doit
+    avoir le verrou sur cet objet (via synchronized) ; cela a pour
+    effet de libérer le verrou.
+  \item void notifyAll () : réveille tous les threads qui attendent
+    pour utiliser un objet verrouillé. Là encore, avant d'utiliser
+    monObjet.notifyAll (), un thread doit avoir le verrou sur cet objet.
+  \item void notify () : idem, mais ne réveille qu'un seul thread
+    parmi ceux qui attendent. (Déconseillé, car le thread choisi
+    dépend de l'environnement)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Deadlock}
+  Imaginons...
+  \begin{itemize}
+  \item qu'un premier thread cherche à poser un verrou d'abord sur l'objet
+    o1, puis sur l'objet o2 ;
+  \item qu'un second thread cherche à poser un verrou d'abord sur
+    l'objet o2, puis sur l'objet o1.
+  \end{itemize}
+  Il est alors possible que le premier thread pose un verrou sur
+  l'objet o1, pendant que le second thread pose un verrou sur l'objet
+  o2. Le premier thread attend alors de pouvoir accéder à l'objet o2,
+  tandis que le second thread attend d'accéder à l'objet o1.
+
+  $\rightarrow$ On appelle cela deadlock (interblocage en
+  français). Les deux threads se bloquent alors mutuellement. 
+
+  $\rightarrow$ Très difficile à débugger, car deux threads peuvent se
+  bloquer mutuellement ou pas en fonction de leur ordre
+  d'activation. Il faut donc faire attention à l'ordre dans lequel on
+  pose des verrous sur des objets.
+\end{frame}
+
+\begin{frame}
+  \frametitle{Résumé}
+  \begin{itemize}
+  \item Pour créer un thread, une classe doit hériter de la classe
+    Thread (ou implémenter l'interface Runnable) et redéfinir la
+    méthode void run () ;
+  \item Pour lancer un thread :\\Thread t = new Thread ();\\t.start ();
+  \item t.join () attend la fin du thread t;
+  \item Thread.sleep (duree) permet de mettre le thread appelant en veille ;
+  \item t.interrupt () envoie une interruption au thread t;
+  \item this.isInterrupted () permet de savoir si le thread a été
+    interrompu ;
+  \item Pour le partage de ressources entre plusieurs threads :
+    mot-clé synchronized.
+  \end{itemize}
+\end{frame}
+\end{document}
