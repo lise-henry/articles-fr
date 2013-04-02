@@ -1,7 +1,7 @@
 % Programmation orientée objet en C, partie 1
 % Élisabeth Henry
 
-### Introduction ###
+# Introduction #
 
 Le C n'est pas un langage orienté objet, contrairement à C++, Java,
 Objective-C, C#, Vala, etcaetera. Cela ne veut pas pour autant dire
@@ -41,7 +41,7 @@ dont cela peut être implémenté, et peut-être, à travers cela, de mieux
 maîtriser certains de ces concepts qui, dans les langages plus hauts
 niveaux, peuvent parfois apparaître quelque peu « magiques ».
 
-### Quelques concepts de programmation orientée objet ###
+# Quelques concepts de programmation orientée objet #
 
 Pour résumer de façon brutale, la notion d'« objet » consiste à
 associer des données (les attributs) et des procédures manipulant ces
@@ -68,7 +68,7 @@ comment implémenter en C :
 * des méthodes virtuelles, permettant une certaine forme de
   polymorphisme.
   
-### Exemple : un plateau de jeu ###
+# Exemple : un plateau de jeu #
 
 Afin de montrer l'utilisation d'un certain nombre de concepts de la
 programmation orientée objet, nous allons prendre l'exemple d'un
@@ -144,9 +144,9 @@ concepts de la programmation orientée objet
 classe, héritage, méthode virtuelle). La question est donc : comment
 implémenter cela en C ?
 
-### Implémenter des classes et objets avec attributs ### 
+## Implémenter des classes et objets avec attributs ##
 
-## Attributs ##
+### Attributs ###
 
 La première chose à faire est de pouvoir créer une classe, et de
 l'utiliser pour en instancier des objets. Si le C ne comporte rien qui
@@ -172,7 +172,7 @@ A.largeur = 6;
 A.longueur = 4;
 ```
 
-## Méthodes ##
+### Méthodes ###
 
 Le C ne permet pas, à l'inverse du C++, de rattacher facilement des
 méthodes à une classe. Une façon de faire est donc d'utiliser une fonction prenant comme premier
@@ -297,7 +297,7 @@ n'avons donc plus qu'à faire :
   free (plateau);
 ```
 
-## Conclusion provisoire ##
+# Conclusion provisoire #
 
 Il y a certes des redondances dans le code. On est obligé d'écrire :
 
@@ -333,3 +333,154 @@ l'instant pas un.
 Dans le prochain article, on verra comment il est possible (et assez
 facile) d'implémenter la notion d'*héritage* en C, ce qui nous
 permettra de nous rapprocher un peu de notre objectif.
+
+# Annexe : code source complet #
+
+## plateau.h ##
+
+```C
+#ifndef _PLATEAU_H_
+#define _PLATEAU_H_
+
+/* Structure contenant les différentes propriétés d'un plateau */
+typedef struct {
+  int longueur;
+  int largeur;
+} Plateau;
+
+/* Méthodes applicables à un plateau */
+void plateau_init (Plateau * plateau, int longueur, int largeur);
+Plateau * plateau_new (int longueur, int largeur);
+int plateau_get_longeuur (Plateau * plateau);
+int plateau_get_largeur (Plateau * plateau);
+char plateau_get_case (Plateau * plateau, int x, int y);
+void plateau_afficher (Plateau * plateau);
+
+#endif /* _PLATEAU_H_ */
+```C
+
+## plateau.c ##
+```C
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "plateau.h"
+
+/**
+ * Initialise un plateau déjà alloué
+ **/
+void plateau_init (Plateau * plateau, int longueur, int largeur)
+{
+  plateau->longueur = longueur;
+  plateau->largeur = largeur;
+}
+
+/**
+ * Alloue la mémoire nécessaire pour stocker un Plateau et l'initialise
+ **/
+Plateau * plateau_new (int longueur, int largeur)
+{
+  Plateau * plateau = calloc (1, sizeof (Plateau));
+  plateau_init (plateau, longueur, largeur);
+  return plateau;
+}
+
+/**
+ * Renvoie la longueur d'un plateau
+ **/
+int plateau_get_longueur (Plateau * plateau)
+{
+  return plateau->longueur;
+}
+
+/**
+ * Renvoie la largeur d'un plateau
+ **/
+int plateau_get_largeur (Plateau * plateau)
+{
+  return plateau->largeur;
+}
+
+/**
+ * Renvoie le caractère correspondant à la case située à la position
+ * (x, y) du plateau
+ **/
+char plateau_get_case (Plateau * plateau, int x, int y)
+{
+  if ((x + y) % 2 == 0)
+    {
+      return ' ';
+    }
+  else
+    {
+      return '#';
+    }
+}
+
+/**
+ * Affiche le plateau sur la sortie standard
+ **/
+void plateau_afficher (Plateau * plateau)
+{
+  int i;
+  int j;
+
+  /* Bordure du haut */
+  printf (" ");
+  for (j = 0; j < plateau->largeur - 1;j++)
+    {
+      printf ("__");
+    }
+  printf ("_\n");
+
+  /* Lignes du damier */
+  for (i = 0; i < plateau->longueur; i++)
+    {
+      printf ("|");
+      for (j = 0; j < plateau->largeur; j++)
+        {
+          printf ("%c|", plateau_get_case (plateau, j, i));
+        }
+      printf ("\n");
+    }
+
+  /* Bordure du bas */
+  /* Bordure du haut */
+  printf (" ");
+  for (j = 0; j < plateau->largeur-1;j++)
+    {
+      printf ("--");
+    }
+  printf ("-\n");
+}
+```
+
+## damier.c ##
+
+```C
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "plateau.h"
+
+int main (int argc, char **argv)
+{
+  Plateau * plateau1 = plateau_new (8, 8);
+  Plateau * plateau2 = plateau_new (12, 6);
+
+  printf ("Affichage de plateau1 (%d x %d)\n", 
+    plateau_get_longueur (plateau1),
+    plateau_get_largeur (plateau1));
+  plateau_afficher (plateau1);
+
+  printf ("Affichage de plateau2 (%d x %d)\n", 
+    plateau_get_longueur (plateau2),
+    plateau_get_largeur (plateau2));
+  plateau_afficher (plateau2);
+
+  free (plateau1);
+  free (plateau2);
+
+  return 0;
+}
+```
