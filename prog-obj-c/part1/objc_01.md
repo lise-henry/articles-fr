@@ -357,7 +357,7 @@ char plateau_get_case (Plateau * plateau, int x, int y);
 void plateau_afficher (Plateau * plateau);
 
 #endif /* _PLATEAU_H_ */
-```C
+```
 
 ## plateau.c ##
 ```C
