@@ -250,7 +250,7 @@ On peut maintenant vérifier que notre classe `PlateauPions` fonctionne
 correctement : 
 
 ~~~~ {#mycode .C}
-  PlateauPions * p_p = plateau_pions_new (6, 8);
+  PlateauPions * p_p = plateau_pions_new (9, 8);
 
   plateau_pions_ajouter_pion (p_p, 7, 4);
   plateau_pions_ajouter_pion (p_p, 7, 5);
@@ -277,13 +277,17 @@ Contenu de quelques cases...
 (7, 4) -> O
 (7, 5) -> O
 (7, 6) -> #
- _______________
+
+_______________
 | |#| |#| |#| |#|
 |#| |#| |#| |#| |
 | |#| |#| |#| |#|
 |#| |#| |#| |#| |
 | |#| |#| |#| |#|
 |#| |#| |#| |#| |
+| |#| |#| |#| |#|
+|#| |#| |#| |#| |
+| |#| |#| |#| |#|
  ---------------
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -305,3 +309,131 @@ Pour cela, il est nécessaire de déclarer la méthode `get_case` comme
 une *méthode virtuelle*. Cela dit, contrairement aux langages orientés
 objet, cela va être un peu plus compliqué que de juste rajouter le
 mot-clé `virtual`...
+
+# Méthodes virtuelles #
+
+En C, l'implémentation de méthodes virtuelles va se faire par des
+pointeurs sur fonction. En effet, il est tout à fait possible de
+rajouter un nouveau champ `get_case` à la structure `Plateau` qui
+serait un pointeur sur fonction, et qui aurait des valeurs différentes
+pour les objets de type `Plateau` et de type `PlateauPions` : 
+
+```C
+typedef struct Plateau {
+  int longueur;
+  int largeur;
+  char (*get_case) (struct _Plateau * self, int x, int y);
+} Plateau;
+```
+
+Le type `Plateau` a maintenant un nouveau champ, `get_case`, qui est
+un pointeur vers une fonction qui prend comme argument un `Plateau` et
+deux entiers, et renvoie un caractère (à l'intérieur de la définition
+de la structure, comme le `typedef` n'a pas encore pu avoir effet, il
+n'est pas possible d'utiliser directement le type `Plateau`, d'où
+l'utilisation de `struct _Plateau`). 
+
+Il faut maintenant assigner cette variable au moment de la création
+d'un `Plateau`, ainsi que d'un `PlateauPions` :
+
+```C
+void plateau_init (Plateau * plateau, int longueur, int largeur)
+{
+  plateau->longueur = longueur;
+  plateau->largeur = largeur;
+  plateau->get_case = plateau_get_case;
+}
+
+void plateau_pions_init (PlateauPions * self, int longueur, int largeur)
+{
+  int i;
+
+  plateau_init ((Plateau *) self, longueur, largeur);
+  self->parent.get_case = (char (*) (Plateau *, int, int)) plateau_pions_get_case;
+  /* [...] (allocation de self->pions) */
+}
+```
+
+Mis à part le *cast* sur le type de fonction, qui n'est pas très joli
+à voir, cela reste assez simple, et on peut maintenant utiliser
+`p->get_case (...)` pour appeler, selon la classe de `p`,
+l'implémentation de `get_case` par `Plateau` ou `PlateauPions`. Il ne
+nous reste donc plus qu'à modifier la méthode `plateau_afficher` pour
+qu'elle utilise `self->get_case` au lieu de `plateau_get_case` :
+
+```C
+for (...)
+{
+    for (...)
+        {
+            printf ("%c|", self->get_case (self, j, i));
+        }
+    }    
+}
+```
+
+Une fois ces changements faits, on peut recompiler notre programme
+précédent. La méthode `afficher` marche maintenant correctement pour
+la classe `PlateauPions` :
+
+```
+Contenu de quelques cases...
+(7, 3) ->  
+(7, 4) -> O
+(7, 5) -> O
+(7, 6) -> #
+ _______________
+| |#| |#| |#| |#|
+|#| |#| |#| |#| |
+| |#| |#| |#| |#|
+|#| |#| |#| |#| |
+| |#| |#| |#| |O|
+|#| |#| |#| |#|O|
+| |#| |#| |#| |#|
+|#| |#| |#| |#| |
+| |#| |#| |#| |#|
+ ---------------
+```
+
+On voit effectivement maintenant deux «pions» (sous forme de O) à
+droite de l'échiquier, en position (7, 4) et (7, 5).
+
+# Conclusion #
+
+Avec l'implémentation de classes, d'objets, d'héritage et de méthode
+virtuelle, nous avons maintenant un petit programme, écrit en C, qui
+utilise les mécanismes de programmation orienté objet. 
+
+On pourrait s'arrêter là — le programme fonctionne, après tout (même
+s'il ne fait pas grand chose) — mais il n'en reste pas moins que notre
+approche présente un certain nombre de problèmes :
+
+* Dans l'état actuel des choses, on peut appeler soit
+  `plateau_pions_get_case`, soit `plateau_get_case`, soit
+  `p->get_case`. Seule la dernière est virtuelle. Idéalement, il
+  faudrait que seule celle-ci puisse être appelée, mis à part par les
+  classes dérivées ; le C ne fournissant pas de mot-clé `protected`
+  (ni `private`, d'ailleurs), cela risque d'être compliqué, mais on
+  peut au moins faire en sorte que cela soit plus clair pour
+  l'utilisateur de ces classee.
+* Par ailleurs, il serait bien qu'il ait une certaine homogénéité
+  entre les appels de méthode et d'éviter d'avoir à appeler
+  alternativement `classe_méthode` ou `objet->méthode` selon qu'une
+  méthode est virtuelle ou pas. 
+* Le pointeur sur la fonction `get_case` est stocké directement dans
+  l'instance alors que, pour une méthode virtuelle, la valeur sera la
+  même pour tous les objets de la classe. Si on crée beaucoup
+  d'objets avec beaucoup de méthodes virtuelles, cela peut entraîner
+  une consommation accrue d'espace mémoire.
+* À aucun moment, on ne vérifie que l'objet qu'une méthode prend en
+  paramètre est bien d'un type «compatible» (c'est-à-dire, est une
+  instance de la classe, ou d'une classe dérivée). 
+* La méthode `plateau_pions_free` n'est pas sans poser problème, car
+  elle libère à la fois la mémoire allouée par un objet et l'objet en
+  question : si une nouvelle classe hérite de PlateauPions, elle devra
+  réimplémenter complétement cette méthode.
+
+Nous tâcherons de résoudre — au moins en partie — ces problèmes dans
+le prochain article.
+
+

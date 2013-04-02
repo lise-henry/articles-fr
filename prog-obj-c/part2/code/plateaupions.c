@@ -17,6 +17,7 @@ void plateau_pions_init (PlateauPions * self, int longueur, int largeur)
   int i;
 
   plateau_init ((Plateau *) self, longueur, largeur);
+  self->parent.get_case = (char (*) (Plateau *, int, int)) plateau_pions_get_case;
 
   self->pions = calloc (largeur, sizeof (char *));
   assert (self->pions);

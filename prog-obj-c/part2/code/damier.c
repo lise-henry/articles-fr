@@ -6,7 +6,7 @@
 
 int main (int argc, char **argv)
 {
-  PlateauPions * p_p = plateau_pions_new (6, 8);
+  PlateauPions * p_p = plateau_pions_new (9, 8);
 
   plateau_pions_ajouter_pion (p_p, 7, 4);
   plateau_pions_ajouter_pion (p_p, 7, 5);

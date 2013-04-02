@@ -2,9 +2,10 @@
 #define _PLATEAU_H_
 
 /* Structure contenant les différentes propriétés d'un plateau */
-typedef struct {
+typedef struct Plateau {
   int longueur;
   int largeur;
+  char (*get_case) (struct Plateau * self, int x, int y);
 } Plateau;
 
 /* Méthodes applicables à un plateau */
