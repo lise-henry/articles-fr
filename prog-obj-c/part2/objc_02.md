@@ -436,4 +436,248 @@ approche présente un certain nombre de problèmes :
 Nous tâcherons de résoudre — au moins en partie — ces problèmes dans
 le prochain article.
 
+# Annexe : code source complet #
 
+## plateau.h ##
+
+```C
+#ifndef _PLATEAU_H_
+#define _PLATEAU_H_
+
+/* Structure contenant les différentes propriétés d'un plateau */
+typedef struct _Plateau {
+  int longueur;
+  int largeur;
+  char (*get_case) (struct _Plateau * self, int x, int y);
+} Plateau;
+
+/* Méthodes applicables à un plateau */
+void plateau_init (Plateau * plateau, int longueur, int largeur);
+Plateau * plateau_new (int longueur, int largeur);
+int plateau_get_longeuur (Plateau * plateau);
+int plateau_get_largeur (Plateau * plateau);
+char plateau_get_case (Plateau * plateau, int x, int y);
+void plateau_afficher (Plateau * plateau);
+
+#endif /* _PLATEAU_H_ */
+```
+
+## plateau.c ##
+
+```C
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "plateau.h"
+
+/**
+ * Initialise un plateau déjà alloué
+ **/
+void plateau_init (Plateau * self, int longueur, int largeur)
+{
+  self->longueur = longueur;
+  self->largeur = largeur;
+  self->get_case = plateau_get_case;
+}
+
+/**
+ * Alloue la mémoire nécessaire pour stocker un Plateau et l'initialise
+ **/
+Plateau * plateau_new (int longueur, int largeur)
+{
+  Plateau * self = calloc (1, sizeof (Plateau));
+  plateau_init (self, longueur, largeur);
+  return self;
+}
+
+/**
+ * Renvoie la longueur d'un plateau
+ **/
+int plateau_get_longueur (Plateau * self)
+{
+  return self->longueur;
+}
+
+/**
+ * Renvoie la largeur d'un plateau
+ **/
+int plateau_get_largeur (Plateau * self)
+{
+  return self->largeur;
+}
+
+/**
+ * Renvoie le caractère correspondant à la case située à la position
+ * (x, y) du plateau
+ **/
+char plateau_get_case (Plateau * self, int x, int y)
+{
+  if ((x + y) % 2 == 0)
+    {
+      return ' ';
+    }
+  else
+    {
+      return '#';
+    }
+}
+
+/**
+ * Affiche le plateau sur la sortie standard
+ **/
+void plateau_afficher (Plateau * self)
+{
+  int i;
+  int j;
+
+  /* Bordure du haut */
+  printf (" ");
+  for (j = 0; j < self->largeur - 1;j++)
+    {
+      printf ("__");
+    }
+  printf ("_\n");
+
+  /* Lignes du damier */
+  for (i = 0; i < self->longueur; i++)
+    {
+      printf ("|");
+      for (j = 0; j < self->largeur; j++)
+        {
+          printf ("%c|", self->get_case (self, j, i));
+        }
+      printf ("\n");
+    }
+
+  /* Bordure du bas */
+  /* Bordure du haut */
+  printf (" ");
+  for (j = 0; j < self->largeur-1;j++)
+    {
+      printf ("--");
+    }
+  printf ("-\n");
+}
+```C
+
+## plateaupions.h ##
+
+```C
+#ifndef _PLATEAU_PIONS_H_
+#define _PLATEAU_PIONS_H_
+
+#include "plateau.h"
+
+/* Structure PlateauPions, héritant de Plateau */
+typedef struct {
+  Plateau parent;
+  char **pions;
+} PlateauPions;
+
+PlateauPions * plateau_pions_new (int longueur, int largeur);
+void plateau_pions_init (PlateauPions * self, int longueur, int largeur);
+void plateau_pions_ajouter_pions (PlateauPions * self, int x, int y);
+void plateau_pions_retirer_pions (PlateauPions * self, int x, int y);
+char plateau_pions_get_case (PlateauPions * self, int x, int y);
+void plateau_pions_free (PlateauPions * self);
+
+#endif /* _PLATEAU_PIONS_H_ */
+```
+
+## plateaupions.c ##
+
+```C
+#include <stdlib.h>
+
+#include "plateau.h"
+#include "plateaupions.h"
+
+PlateauPions * plateau_pions_new (int longueur, int largeur)
+{
+  PlateauPions * self = calloc (1, sizeof (PlateauPions));
+  plateau_pions_init (self, longueur, largeur);
+  return self;
+}
+
+void plateau_pions_init (PlateauPions * self, int longueur, int largeur)
+{
+  int i;
+
+  plateau_init ((Plateau *) self, longueur, largeur);
+  self->parent.get_case = (char (*) (Plateau *, int, int)) plateau_pions_get_case;
+
+  self->pions = calloc (largeur, sizeof (char *));
+  for (i = 0; i < largeur; i++)
+    {
+      self->pions[i] = calloc (longueur, sizeof (char));
+    }
+}
+
+void plateau_pions_ajouter_pion (PlateauPions * self, int x, int y)
+{
+  self->pions[x][y] = 1;
+}
+
+void plateau_pions_retirer_pion (PlateauPions * self, int x, int y)
+{
+  self->pions[x][y] = 0;
+}
+
+char plateau_pions_get_case (PlateauPions * self, int x, int y)
+{
+  if (self->pions[x][y])
+    {
+      return 'O';
+    }
+  else
+    {
+      return plateau_get_case ((Plateau *) self, x, y);
+    }
+}
+
+void plateau_pions_free (PlateauPions *self)
+{
+  int largeur = plateau_get_largeur ((Plateau *) self);
+  int i;
+
+  for (i = 0; i < largeur; i++)
+    {
+      free (self->pions[i]);
+    }
+  free (self->pions);
+  free (self);
+}
+```
+
+## damier.c ##
+
+```C
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "plateau.h"
+#include "plateaupions.h"
+
+int main (int argc, char **argv)
+{
+  PlateauPions * p_p = plateau_pions_new (9, 8);
+
+  plateau_pions_ajouter_pion (p_p, 7, 4);
+  plateau_pions_ajouter_pion (p_p, 7, 5);
+
+  printf ("Contenu de quelques cases...\n"
+    "(7, 3) -> %c\n"
+    "(7, 4) -> %c\n"
+    "(7, 5) -> %c\n"
+    "(7, 6) -> %c\n",
+    plateau_pions_get_case (p_p, 7, 3),
+    plateau_pions_get_case (p_p, 7, 4),
+    plateau_pions_get_case (p_p, 7, 5),
+    plateau_pions_get_case (p_p, 7, 6));
+  
+  plateau_afficher ((Plateau *) p_p);
+  plateau_pions_free (p_p);
+
+  return 0;
+}
+```
