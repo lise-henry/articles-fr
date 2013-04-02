@@ -11,6 +11,10 @@ l'utilisation de threads en Java. Une version PDF est également
 disponible ici :
 http://segfault.ouvaton.org/public/documents/threads_java.pdf
 
+### prog-obj-c ###
+
+Programmation orienté objet en C. Rédaction en cours.
+
 ### Licence ###
 
 Les documents proposés dans ce dépôt peuvent être redistribués sous
